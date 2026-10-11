@@ -9,7 +9,7 @@ export function SiteFooter() {
           Wanderlust Country Guide
         </p>
         <p className="max-w-xl text-pretty leading-relaxed">
-          Budgets are approximate per-person daily estimates in USD. Visa rules change often — always confirm
+          Budgets are approximate per-person daily estimates; exchange rates are indicative samples. Visa rules change often — always confirm
           with official government sources before you travel. Photos via Wikimedia Commons.
         </p>
       </div>

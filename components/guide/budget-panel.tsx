@@ -4,7 +4,10 @@ import { useState } from 'react'
 import { Minus, Plus, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { BudgetTier, Country } from '@/lib/countries'
+import { convert, formatMoney, getCurrencyCode, type HomeCurrency } from '@/lib/currency'
 import { PanelHeading } from './panel-heading'
+import { CurrencyToggle } from './currency-toggle'
+import { CurrencyConverter } from './currency-converter'
 
 const categories: { key: keyof Pick<BudgetTier, 'stay' | 'food' | 'transport' | 'activities'>; label: string; color: string }[] = [
   { key: 'stay', label: 'Stay', color: 'bg-chart-1' },
@@ -13,21 +16,23 @@ const categories: { key: keyof Pick<BudgetTier, 'stay' | 'food' | 'transport' | 
   { key: 'activities', label: 'Activities', color: 'bg-chart-4' },
 ]
 
-const usd = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
-
 const MIN_DAYS = 1
 const MAX_DAYS = 30
 
 export function BudgetPanel({ country }: { country: Country }) {
   const [days, setDays] = useState(7)
+  const [currency, setCurrency] = useState<HomeCurrency>('USD')
+  const money = (usdAmount: number) => formatMoney(convert(usdAmount, 'USD', currency), currency)
 
   return (
     <div>
       <PanelHeading
         icon={Wallet}
         title="Budget Estimation"
-        description="Approximate per-person costs in USD, excluding international flights."
+        description={`Approximate per-person costs in ${currency}, excluding international flights.`}
       >
+        <div className="flex flex-wrap items-center gap-3">
+        <CurrencyToggle value={currency} onChange={setCurrency} />
         <div className="flex items-center gap-3 rounded-full border border-border bg-card p-1.5 pl-4">
           <span id="trip-length-label" className="text-sm font-medium">
             Trip length
@@ -56,6 +61,7 @@ export function BudgetPanel({ country }: { country: Country }) {
             </button>
           </div>
         </div>
+        </div>
       </PanelHeading>
 
       <ul className="grid gap-5 md:grid-cols-3">
@@ -80,11 +86,11 @@ export function BudgetPanel({ country }: { country: Country }) {
               </p>
 
               <p className="mt-5 flex items-baseline gap-1">
-                <span className="font-display text-5xl font-extrabold tracking-tight">{usd.format(tier.perDay)}</span>
+                <span className="font-display text-5xl font-extrabold tracking-tight">{money(tier.perDay)}</span>
                 <span className={cn('text-sm', featured ? 'text-background/70' : 'text-muted-foreground')}>/ day</span>
               </p>
               <p className={cn('mt-1 text-sm', featured ? 'text-background/80' : 'text-muted-foreground')}>
-                <span className="font-semibold">{usd.format(tier.perDay * days)}</span> for {days}{' '}
+                <span className="font-semibold">{money(tier.perDay * days)}</span> for {days}{' '}
                 {days === 1 ? 'day' : 'days'}
               </p>
 
@@ -94,7 +100,7 @@ export function BudgetPanel({ country }: { country: Country }) {
                   featured && '[&>.bg-chart-4]:bg-background/60',
                 )}
                 role="img"
-                aria-label={`Daily breakdown: ${categories.map((c) => `${c.label} ${usd.format(tier[c.key])}`).join(', ')}`}
+                aria-label={`Daily breakdown: ${categories.map((c) => `${c.label} ${money(tier[c.key])}`).join(', ')}`}
               >
                 {categories.map((c) => (
                   <span
@@ -117,7 +123,7 @@ export function BudgetPanel({ country }: { country: Country }) {
                       <span aria-hidden="true" className={cn('size-2.5 rounded-full', c.color)} />
                       {c.label}
                     </dt>
-                    <dd className="font-semibold tabular-nums">{usd.format(tier[c.key])}</dd>
+                    <dd className="font-semibold tabular-nums">{money(tier[c.key])}</dd>
                   </div>
                 ))}
               </dl>
@@ -125,6 +131,13 @@ export function BudgetPanel({ country }: { country: Country }) {
           )
         })}
       </ul>
+
+      <CurrencyConverter
+        key={country.id}
+        homeCurrency={currency}
+        localCurrency={getCurrencyCode(country.currency)}
+        countryName={country.name}
+      />
     </div>
   )
 }
